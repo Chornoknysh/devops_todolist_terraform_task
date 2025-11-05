@@ -2,10 +2,15 @@ provider "azurerm" {
   features {}
 }
 
+resource "azurerm_resource_group" "main" {
+  name     = var.resource_group_name
+  location = var.location
+}
+
 module "network" {
   source                      = "./modules/network"
   location                    = var.location
-  resource_group_name         = var.resource_group_name
+  resource_group_name         = azurerm_resource_group.main.name
   virtual_network_name        = var.virtual_network_name
   vnet_address_prefix         = var.vnet_address_prefix
   subnet_name                 = var.subnet_name
@@ -18,7 +23,7 @@ module "network" {
 module "compute" {
   source              = "./modules/compute"
   location            = var.location
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.main.name
   subnet_id           = module.network.subnet_id
   public_ip_id        = module.network.public_ip_id
   vm_name             = var.vm_name
@@ -27,9 +32,9 @@ module "compute" {
 }
 
 module "storage" {
-  source              = "./modules/storage"
-  location            = var.location
-  resource_group_name = var.resource_group_name
+  source               = "./modules/storage"
+  location             = var.location
+  resource_group_name  = azurerm_resource_group.main.name
   storage_account_name = "stor${random_integer.rand.result}"
 }
 
